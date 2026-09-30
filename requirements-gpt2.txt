@@ -1,0 +1,5 @@
+# Requirements for the GPT-2 small port (extract_attention_gpt2.py).
+# The BERT path still uses TensorFlow; this path uses PyTorch + transformers.
+torch>=1.9
+transformers>=4.0
+numpy
