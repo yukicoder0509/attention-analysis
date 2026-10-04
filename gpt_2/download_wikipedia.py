@@ -4,7 +4,7 @@ import sys
 
 from extract_attention import download_wikipedia
 
-download_wikipedia(n_samples=1024, seed=42)
+download_wikipedia(n_samples=4096, seed=42)
 
 # Streaming leaves background threads alive that abort the interpreter at
 # shutdown ("PyGILState_Release ... finalizing"); the JSON is already closed.
