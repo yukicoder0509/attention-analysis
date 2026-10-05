@@ -1,0 +1,63 @@
+{
+  "input_file": "data/wiki_gpt2_natural_v2.jsonl",
+  "input_sha256": "b2284494eea86fb9a9c02d178bf712313a7bac4540daa11fc973aaf372f60e0b",
+  "candidate_count": 1000,
+  "discovery_count": 158,
+  "validation_count": 842,
+  "model_name": "openai-community/gpt2",
+  "variants": {
+    "canonical": {
+      "processed_count": 1000,
+      "archive": "canonical_documents.npz",
+      "archive_bytes": 49130835,
+      "max_dense_array_bytes": 301400352,
+      "row_sum_max_error": 0.00041794776916503906,
+      "future_attention_max": 0.0,
+      "elapsed_seconds": 265.7330390159999
+    },
+    "no_leading_eot": {
+      "processed_count": 1000,
+      "archive": "no_leading_eot_documents.npz",
+      "archive_bytes": 49080496,
+      "max_dense_array_bytes": 300811392,
+      "row_sum_max_error": 0.00042879581451416016,
+      "future_attention_max": 0.0,
+      "elapsed_seconds": 268.875343207
+    }
+  },
+  "storage_mode": "one dense map in RAM, compact per-document statistics on disk",
+  "groups": [
+    "initial",
+    "boundary",
+    "period",
+    "comma",
+    "newline",
+    "punct",
+    "the"
+  ],
+  "python": "3.12.3",
+  "numpy": "2.5.3",
+  "torch": "2.14.1+cu130",
+  "transformers": "5.18.0",
+  "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+  "tokenizer_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+  "protocol_sha256": "01704c0f675c10a8e8ed68bb3205069cfd32f8e92138d0c45b9a10856b6831d1",
+  "report_analysis_code_sha256": "452c103165ddc467ade69be36d9a58845a0ebe8097795c72cd45a0a31e98c376",
+  "input_audit": {
+    "canonical_roundtrip_count": 1000,
+    "unique_articles": 1000,
+    "all_boundary_ids": [198, 198],
+    "retokenization_repeat_byte_identical": true,
+    "min_length": 70,
+    "max_length": 1023,
+    "ordinary_queries": 194091
+  },
+  "verification": {
+    "unit_tests_passed": 12,
+    "executed_notebook_figures": 8,
+    "executed_notebook_errors": 0,
+    "all_head_dense_dump_files_retained": 0
+  },
+  "device": "cuda",
+  "gpu": "NVIDIA GeForce RTX 3080 Laptop GPU"
+}

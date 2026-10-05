@@ -141,11 +141,99 @@ Output is written to `<path>_attn.pkl` with the same
 `[n_layers, n_heads, n_tokens, n_tokens]` `"attns"` array (144 heads for GPT-2
 small, matching BERT-base).
 
-For the general analysis, use `General_Analysis_GPT2.ipynb`, a copy of
-`General_Analysis.ipynb` with the special-token detection adapted to
-`<|endoftext|>` and notes on which sections are causally degenerate. The syntax
-notebook (Sections 4.2/5) is **not** ported: it depends on word-level attention
-alignment, which does not transfer to GPT-2's tokenizer.
+### Wikipedia experiments 2 and 3
+
+The current formal entry point is `General_Analysis_GPT2.ipynb`. It follows the
+original notebook's Figure 1 (attention links), Figure 2 (head/layer scatter)
+and Figure 4 (entropy) conventions, with explicit causal-GPT-2 adaptations.
+The completed study, including negative results, is in
+[`results/gpt2_streaming/experiment_summary.md`](results/gpt2_streaming/experiment_summary.md).
+
+The recommended workflow now streams attention without retaining dense dumps:
+
+```text
+prepare_wikipedia_gpt2.py
+        -> General_Analysis_GPT2.ipynb
+             -> extract_attention_gpt2.AttnMapExtractor (one sample at a time)
+             -> gpt2_streaming.py (compact per-document statistics)
+```
+
+Install the packages in `requirements-gpt2.txt`, then prepare 1000 candidates
+from the pinned English Wikipedia snapshot:
+
+```bash
+python prepare_wikipedia_gpt2.py \
+  --dataset wikimedia/wikipedia \
+  --config 20231101.en \
+  --revision ad5752b \
+  --num-candidates 1000 \
+  --seed 42 \
+  --max-length 1024 \
+  --output data/wiki_gpt2_natural_v2.jsonl
+```
+
+Each record contains the exact input IDs for
+`<|endoftext|> paragraph_1 \n\n paragraph_2 <|endoftext|>`. The paragraphs
+are adjacent in the same article; there is no artificial EOT at their
+boundary. **Tokenize the joined paragraph text**, not each paragraph and
+separator independently: in these samples the natural boundary is `[198, 198]`,
+not the artificially forced ID 628 used by the superseded first run.
+
+To preserve existing article/paragraph choices while correcting tokenization:
+
+```bash
+python prepare_wikipedia_gpt2.py \
+  --reprocess-jsonl data/wiki_gpt2_segments.jsonl \
+  --max-length 1024 --output data/wiki_gpt2_natural_v2.jsonl
+```
+
+Run all cells in `General_Analysis_GPT2.ipynb`. It processes all 1000 articles
+twice (with and without leading EOT), retaining only per-article statistics and
+five example heads. Finished archives are reused without inference. The output
+directory is `results/gpt2_streaming`; it contains CSVs, NPZs, provenance and
+PNG/PDF figures. Delete neither raw inputs nor compact archives when reclaiming
+space. Dense attention is released after each sample.
+
+The first 158 previously inspected articles are discovery only; eight fixed
+hypotheses are evaluated on the remaining 842, using article-bootstrap CIs and
+Holm-adjusted sign tests. See `results/gpt2_streaming/protocol.md`. No-leading-EOT
+is a position diagnostic, not proof of functional no-op behavior or an isolated
+intervention on token identity. Additional observations are descriptive.
+
+For workflows that still need saved attention maps (for example clustering),
+the original pickle mode and optional budgeted sharded mode remain available:
+
+```bash
+python extract_attention_gpt2.py \
+  --preprocessed-data-file data/wiki_gpt2_natural_v2.jsonl \
+  --model-name openai-community/gpt2 \
+  --max_sequence_length 1024 \
+  --batch_size 1 \
+  --output-dir outputs/gpt2_attention_v2 \
+  --max-output-bytes 2147483648 \
+  --stop-on-budget
+```
+
+The extractor stops before the first candidate that would exceed the budget;
+it does not skip ahead to find a shorter candidate. `manifest.json` records the
+actual sample count, sizes, revisions, validation errors, package versions and
+stop reason. A full 1024-token GPT-2-small attention map is about 288 MiB, so
+the final N can be much smaller than 1000.
+
+Experiment 2 distinguishes punctuation/boundary enrichment from initial-key
+concentration, with query- and distance-matched baselines. Experiment 3 compares
+raw/causal-normalized entropy, max attention, query positions and distributions
+conditioned on noninitial keys. All corpus summaries weight documents equally.
+Pure statistics are independently tested in `gpt2_analysis.py` and
+`gpt2_streaming.py`. Both experiments run without `head_distances.pkl`; that
+file is loaded only in the optional Section 6 clustering cell.
+
+`results/gpt2` and `outputs/gpt2_attention` are historical artifacts, not current
+results. Their 158 dense maps were removed after preserving metadata and the
+legacy report. The old ID-628 claim is withdrawn because of the tokenization bug.
+
+The syntax notebook (Sections 4.2/5) is **not** ported: it depends on word-level
+attention alignment, which does not transfer to GPT-2's tokenizer.
 
 ## Computing Distances Between Attention Heads
 `head_distances.py` computes the average Jenson-Shannon divergence between the attention weights of all pairs of attention heads and writes the results to disk as a numpy array of shape [n_heads, n_heads]. These distances can be used to cluster BERT's attention heads (see Section 6 and Figure 6 of the paper; code for doing this clustering is in `General_Analysis.ipynb`). Example usage (requires that attention maps have already been extracted):
